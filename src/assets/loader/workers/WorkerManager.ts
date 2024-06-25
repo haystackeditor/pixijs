@@ -1,4 +1,3 @@
-import CheckImageBitmapWorker from 'worker:./checkImageBitmap.worker.ts';
 import LoadImageBitmapWorker from 'worker:./loadImageBitmap.worker.ts';
 
 let UUID = 0;
@@ -11,8 +10,7 @@ type LoadImageBitmapResult = {
     id: string,
 };
 
-class WorkerManagerClass
-{
+class WorkerManagerClass {
     public worker: Worker;
     private _resolveHash: {
         [key: string]: {
@@ -31,61 +29,41 @@ class WorkerManagerClass
     private _createdWorkers = 0;
     private _isImageBitmapSupported?: Promise<boolean>;
 
-    constructor()
-    {
+    constructor() {
         this._workerPool = [];
         this._queue = [];
 
         this._resolveHash = {};
     }
 
-    public isImageBitmapSupported(): Promise<boolean>
-    {
-        if (this._isImageBitmapSupported !== undefined) return this._isImageBitmapSupported;
-
-        this._isImageBitmapSupported = new Promise((resolve) =>
-        {
-            const { worker } = new CheckImageBitmapWorker();
-
-            worker.addEventListener('message', (event: MessageEvent<boolean>) =>
-            {
-                worker.terminate();
-                CheckImageBitmapWorker.revokeObjectURL();
-                resolve(event.data);
-            });
-        });
+    public isImageBitmapSupported(): Promise<boolean> {
+        this._isImageBitmapSupported = new Promise((resolve) => resolve(true));
 
         return this._isImageBitmapSupported;
     }
 
-    public loadImageBitmap(src: string): Promise<ImageBitmap>
-    {
+    public loadImageBitmap(src: string): Promise<ImageBitmap> {
         return this._run('loadImageBitmap', [src]) as Promise<ImageBitmap>;
     }
 
-    private async _initWorkers()
-    {
+    private async _initWorkers() {
         if (this._initialized) return;
 
         this._initialized = true;
     }
 
-    private _getWorker(): Worker
-    {
-        if (MAX_WORKERS === undefined)
-        {
+    private _getWorker(): Worker {
+        if (MAX_WORKERS === undefined) {
             MAX_WORKERS = navigator.hardwareConcurrency || 4;
         }
         let worker = this._workerPool.pop();
 
-        if (!worker && this._createdWorkers < MAX_WORKERS)
-        {
+        if (!worker && this._createdWorkers < MAX_WORKERS) {
             // only create as many as MAX_WORKERS allows..
             this._createdWorkers++;
             worker = new LoadImageBitmapWorker().worker;
 
-            worker.addEventListener('message', (event: MessageEvent) =>
-            {
+            worker.addEventListener('message', (event: MessageEvent) => {
                 this._complete(event.data);
 
                 this._returnWorker(event.target as Worker);
@@ -96,32 +74,26 @@ class WorkerManagerClass
         return worker;
     }
 
-    private _returnWorker(worker: Worker)
-    {
+    private _returnWorker(worker: Worker) {
         this._workerPool.push(worker);
     }
 
-    private _complete(data: LoadImageBitmapResult): void
-    {
-        if (data.error !== undefined)
-        {
+    private _complete(data: LoadImageBitmapResult): void {
+        if (data.error !== undefined) {
             this._resolveHash[data.uuid].reject(data.error);
         }
-        else
-        {
+        else {
             this._resolveHash[data.uuid].resolve(data.data);
         }
 
         this._resolveHash[data.uuid] = null;
     }
 
-    private async _run(id: string, args: any[]): Promise<any>
-    {
+    private async _run(id: string, args: any[]): Promise<any> {
         await this._initWorkers();
         // push into the queue...
 
-        const promise = new Promise((resolve, reject) =>
-        {
+        const promise = new Promise((resolve, reject) => {
             this._queue.push({ id, arguments: args, resolve, reject });
         });
 
@@ -130,16 +102,14 @@ class WorkerManagerClass
         return promise;
     }
 
-    private _next(): void
-    {
+    private _next(): void {
         // nothing to do
         if (!this._queue.length) return;
 
         const worker = this._getWorker();
 
         // no workers available...
-        if (!worker)
-        {
+        if (!worker) {
             return;
         }
 

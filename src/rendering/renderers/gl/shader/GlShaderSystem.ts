@@ -1,5 +1,5 @@
 import { ExtensionType } from '../../../../extensions/Extensions';
-import { generateShaderSyncCode } from './GenerateShaderSyncCode';
+import { generateShaderSyncPolyfill } from '../../../../unsafe-eval/shader/generateShaderSyncPolyfill';
 import { generateProgram } from './program/generateProgram';
 
 import type { BufferResource } from '../../shared/buffer/BufferResource';
@@ -89,7 +89,7 @@ export class GlShaderSystem
 
         if (!syncFunction)
         {
-            syncFunction = this._shaderSyncFunctions[shader.glProgram._key] = this._generateShaderSync(shader, this);
+            syncFunction = this._shaderSyncFunctions[shader.glProgram._key] = this._generateShaderSync();
         }
 
         syncFunction(this._renderer, shader, defaultSyncData);
@@ -214,8 +214,8 @@ export class GlShaderSystem
      * @returns - the generated sync function
      * @ignore
      */
-    public _generateShaderSync(shader: Shader, shaderSystem: GlShaderSystem): ShaderSyncFunction
+    public _generateShaderSync(): ShaderSyncFunction
     {
-        return generateShaderSyncCode(shader, shaderSystem);
+        return generateShaderSyncPolyfill();
     }
 }

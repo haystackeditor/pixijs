@@ -1,6 +1,9 @@
 import { ExtensionType } from '../../../../extensions/Extensions';
-import { generateUniformsSync } from './utils/generateUniformsSync';
+// eslint-disable-next-line max-len
+import { uniformArrayParserFunctions, uniformParserFunctions, uniformSingleParserFunctions } from '../../../../unsafe-eval/uniforms/uniformSyncFunctions';
+import { uniformParsers } from '../../shared/shader/utils/uniformParsers';
 
+import type { UniformUploadFunction } from '../../../../unsafe-eval/uniforms/uniformSyncFunctions';
 import type { UniformsSyncCallback } from '../../shared/shader/types';
 import type { UniformGroup } from '../../shared/shader/UniformGroup';
 import type { System } from '../../shared/system/System';
@@ -99,7 +102,57 @@ export class GlUniformGroupSystem implements System
 
     private _generateUniformsSync(group: UniformGroup, uniformData: Record<string, GlUniformData>): UniformsSyncCallback
     {
-        return generateUniformsSync(group, uniformData);
+    // loop through all the uniforms..
+        const functionMap: Record<string, UniformUploadFunction> = {};
+
+        for (const i in group.uniformStructures)
+        {
+            if (!uniformData[i]) continue;
+
+            const uniform = group.uniformStructures[i];
+
+            let parsed = false;
+
+            for (let j = 0; j < uniformParsers.length; j++)
+            {
+                const parser = uniformParsers[j];
+
+                if (uniform.type === parser.type && parser.test(uniform))
+                {
+                    functionMap[i] = uniformParserFunctions[j];
+
+                    parsed = true;
+
+                    break;
+                }
+            }
+
+            // if not parsed...
+
+            if (!parsed)
+            {
+                const templateType = uniform.size === 1 ? uniformSingleParserFunctions : uniformArrayParserFunctions;
+
+                functionMap[i] = templateType[uniform.type];
+            }
+        }
+
+        return (
+            ud: Record<string, any>,
+            uv: Record<string, any>,
+            renderer: WebGLRenderer) =>
+        {
+            const gl = renderer.gl;
+
+            for (const i in functionMap)
+            {
+                const v = uv[i];
+                const cu = ud[i];
+                const cv = ud[i].value;
+
+                functionMap[i](i, cu, cv, v, ud, uv, gl);
+            }
+        };
     }
 
     /**

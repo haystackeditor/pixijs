@@ -1,5 +1,4 @@
-interface MessageData
-{
+interface MessageData {
     data: any[];
     uuid: number;
     id: string;

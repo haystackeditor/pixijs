@@ -1,7 +1,7 @@
 import { ExtensionType } from '../../../extensions/Extensions';
+import { generateUboSyncPolyfillSTD40 } from '../../../unsafe-eval/ubo/generateUboSyncPolyfill';
 import { UboSystem } from '../shared/shader/UboSystem';
 import { createUboElementsSTD40 } from './shader/utils/createUboElementsSTD40';
-import { createUboSyncFunctionSTD40 } from './shader/utils/createUboSyncSTD40';
 
 /**
  * System plugin to the renderer to manage uniform buffers. But with an WGSL adaptor.
@@ -19,7 +19,7 @@ export class GlUboSystem extends UboSystem
     {
         super({
             createUboElements: createUboElementsSTD40,
-            generateUboSync: createUboSyncFunctionSTD40,
+            generateUboSync: generateUboSyncPolyfillSTD40,
         });
     }
 }

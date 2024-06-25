@@ -1,4 +1,3 @@
-import { unsafeEvalSupported } from '../../../../utils/browser/unsafeEvalSupported';
 import { Buffer } from '../buffer/Buffer';
 import { BufferUsage } from '../buffer/const';
 
@@ -29,23 +28,6 @@ export class UboSystem implements System
     constructor(adaptor: UboAdaptor)
     {
         this._adaptor = adaptor;
-
-        // Validation check that this environment support `new Function`
-        this._systemCheck();
-    }
-
-    /**
-     * Overrideable function by `pixi.js/unsafe-eval` to silence
-     * throwing an error if platform doesn't support unsafe-evals.
-     * @private
-     */
-    private _systemCheck(): void
-    {
-        if (!unsafeEvalSupported())
-        {
-            throw new Error('Current environment does not allow unsafe-eval, '
-                 + 'please use pixi.js/unsafe-eval module to enable support.');
-        }
     }
 
     public ensureUniformGroup(uniformGroup: UniformGroup): void

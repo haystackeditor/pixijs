@@ -5,8 +5,8 @@ import jscc from 'rollup-plugin-jscc';
 import sourcemaps from 'rollup-plugin-sourcemaps';
 import { string } from 'rollup-plugin-string';
 import { fileURLToPath } from 'url';
-import webworker from '@pixi/webworker-plugins/rollup-plugin';
 import repo from './package.json' assert { type: 'json' };
+import webworker from './webworker-plugin/rollup-plugin/index.js';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import resolve from '@rollup/plugin-node-resolve';
@@ -169,7 +169,7 @@ async function main()
                         banner: nsBanner,
                         footer,
                         file,
-                        format: 'iife',
+                        format: 'umd',
                         freeze: false,
                         sourcemap: true,
                     },
@@ -193,7 +193,7 @@ async function main()
                         banner: nsBanner,
                         footer,
                         file: prodName(file),
-                        format: 'iife',
+                        format: 'umd',
                         freeze: false,
                         sourcemap: true,
                     },
